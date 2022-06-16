@@ -20,30 +20,39 @@ clean:
 	rm *.exe
 
 $(OBJ)/game_module.o: game_module.cpp
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@
 	
 $(OBJ)/test_module.o: test_module.cpp
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@
 	
 $(OBJ)/gjk_test.o: gjk_test.cpp
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@
 
 $(OBJ)/objects.o: objects.cpp  $(INCLUDE)/objects.h
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@
 	
 $(OBJ)/vector_utilits.o: vector_utilits.cpp  $(INCLUDE)/vector_utilits.h
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@	
 	
 $(OBJ)/utilits.o: utilits.cpp  $(INCLUDE)/utilits.h
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@	
 	
 $(OBJ)/keys.o: keys.cpp  $(INCLUDE)/keys.h
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@	
 
 $(OBJ)/controllers.o: controllers.cpp  $(INCLUDE)/controllers.h
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@	
 
 $(OBJ)/collisions2.o: collisions2.cpp  $(INCLUDE)/collisions2.h
+	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@	
 
 $(ENGINE_OBJ): 
