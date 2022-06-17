@@ -21,8 +21,9 @@
 	#define KEY_MOUSE_R		15
 	#define KEY_X			16
 	#define KEY_Z			17
+	#define KEY_ESC			18
 
-	#define KEY_MAP_LENGTH 18
+	#define KEY_MAP_LENGTH 19
 	#define INVALID_KEY UINT_MAX 
 	
 	void 			init_key_map		();

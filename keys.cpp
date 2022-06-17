@@ -25,6 +25,7 @@ void init_key_map(){
 	KEY_MAP[KEY_C  			] 	= 67;
 	KEY_MAP[KEY_X  			] 	= 88;
 	KEY_MAP[KEY_Z			]   = 90;
+	KEY_MAP[KEY_ESC			]   = 27;
 	
 }
 

@@ -242,6 +242,11 @@ void ENGINE::compute(double Frame_time){
 			camera_focus = true;
 	}
 	
+	if(key_front_down(KEY_ESC)){
+		platform_terminate();
+		
+	}
+	
 	player_controller->compute();
 	artificial_player_controller->compute();
 	

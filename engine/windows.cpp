@@ -28,6 +28,11 @@ void dispatch_engine_message(const MSG* );
 
 UINT wm_paint_counter = 0;
 
+void GAME_ENGINE::platform_terminate(){
+	PostQuitMessage(0);
+	
+}
+
 int APIENTRY WinMain(HINSTANCE Instance, HINSTANCE Prev_instance, LPSTR Cmd_line, int Cmd_show){
 	
 	HDC	 		main_window_dc;	
@@ -132,7 +137,8 @@ LRESULT CALLBACK main_window_procedure(HWND Window, UINT Message, WPARAM W_param
 	
 	switch(Message){
 		case WM_CLOSE:
-			PostQuitMessage(0);
+			GAME_ENGINE::platform_terminate();
+			
 		case WM_PAINT:
 			
 			/*

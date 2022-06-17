@@ -212,7 +212,7 @@
 		/* platform call methods */
 		void platform_init		(const char* );
 		void platform_free		();
-		
+		void platform_terminate ();
 		void platform_compute	(double );
 		void platform_render 	();
 		void platform_event		(const EVENT_MSG& );
