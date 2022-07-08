@@ -31,7 +31,7 @@ METRIC_GRID::~METRIC_GRID(){
 /* class GAME_OBJECT_POINT */
 //=================================================================================================
 GAME_OBJECT_POINT::GAME_OBJECT_POINT(){
-	type = GAME_OBJECT::GOT_POINT;
+	type = GOT_POINT;
 	set_graphic_model(create_point_model());
 }
 
@@ -42,7 +42,7 @@ GAME_OBJECT_POINT::~GAME_OBJECT_POINT(){
 /* class GAME_OBJECT_WALL */
 //=================================================================================================
 GAME_OBJECT_WALL::GAME_OBJECT_WALL(){
-	type 	= GAME_OBJECT::GOT_WALL;
+	type 	= GOT_WALL;
 	width 	= 1.0;
 	height	= 1.0;
 	color	= RGB_COLOR(0.5f, 0.5f, 0.5f);
@@ -77,7 +77,7 @@ void GAME_OBJECT_WALL::despawn(){
 /* class GAME_OBJECT_BULLET */
 //=================================================================================================
 GAME_OBJECT_BULLET::GAME_OBJECT_BULLET(){
-	type 	= GAME_OBJECT::GOT_BULLET;
+	type 	= GOT_BULLET;
 	owner	= nullptr;
 	life_timer = nullptr;
 }
@@ -96,17 +96,19 @@ void GAME_OBJECT_BULLET::spawn(){
 	
 	life_timer = allocate_timer();
 	
-	life_time = 1.5;
+	life_time = 20;
 	life_timer->set(life_time);
 	
 	move_speed = 10;
 	physical_model->velocity = normal * move_speed;
 	
+	bounce_resource = 10;
 }
 
 void GAME_OBJECT_BULLET::compute(){
 	if(life_timer->condition()){
 		GAME_ENGINE::despawn(this);
+		return;
 	}
 }
 
@@ -117,8 +119,30 @@ void GAME_OBJECT_BULLET::despawn(){
 	free_collision_node(get_collision_node());
 }
 
-void GAME_OBJECT_BULLET::collision(GAME_OBJECT* Object){
-	GAME_ENGINE::despawn(this);
+void GAME_OBJECT_BULLET::collision(GAME_OBJECT* Object, const COLLISION_INFO* Info){
+	PHYSICAL_MODEL* physical_model;
+	
+	switch(Object->get_type()){
+		case GOT_WALL:
+			
+			physical_model	= get_physical_model();
+			
+			position += (Info->epa_info.normal * Info->epa_info.distance);
+			physical_model->velocity = mirror_vector(physical_model->velocity, Info->epa_info.normal);
+			
+			/*
+			if(bounce_resource){
+				bounce_resource--;
+			}else
+				GAME_ENGINE::despawn(this);
+			*/
+			
+		break;
+		case GOT_BULLET:
+		break;
+		default:	
+		GAME_ENGINE::despawn(this);
+	}
 }
 
 void GAME_OBJECT_BULLET::set_owner(GAME_OBJECT* Owner){
@@ -132,9 +156,11 @@ GAME_OBJECT* GAME_OBJECT_BULLET::get_owner(){
 /* PLAYER game object*/
 //=================================================================================================
 GAME_OBJECT_PLAYER::GAME_OBJECT_PLAYER(){
-	type = GAME_OBJECT::GOT_PLAYER;
+	type = GOT_PLAYER;
 	on_dead = nullptr;
 	color = RGB_COLOR(0.5f, 0.5f, 0.5f);
+	
+	invul				= false;
 }
 
 void GAME_OBJECT_PLAYER::spawn(){
@@ -158,7 +184,7 @@ void GAME_OBJECT_PLAYER::spawn(){
 	fire_speed		= 0.1;
 	
 	
-	invul				= false;
+	
 	do_forward_move		= false;
 	do_backward_move	= false;
 	do_left_rotate		= false;
@@ -170,7 +196,6 @@ void GAME_OBJECT_PLAYER::spawn(){
 };
 	
 void GAME_OBJECT_PLAYER::despawn(){
-	printf("dispawn \n");
 	free_timer(fire_timer);
 	delete get_graphic_model();
 	free_physical_model(get_physical_model());
@@ -251,14 +276,22 @@ void GAME_OBJECT_PLAYER::set_on_dead(void (*On_dead) (GAME_OBJECT* )){
 	on_dead = On_dead;
 }
 
-void GAME_OBJECT_PLAYER::collision(GAME_OBJECT* Object){
-	if(Object->get_type() == GAME_OBJECT::GOT_BULLET){
-		if(!invul){
+void GAME_OBJECT_PLAYER::collision(GAME_OBJECT* Object, const COLLISION_INFO* Info){
+	switch(Object->get_type()){
+	case GOT_BULLET:
+		if(invul != true){
 			if(on_dead != nullptr)
 				on_dead(Object);
 			
 			GAME_ENGINE::despawn(this);
 		}
+	break;
+	case GOT_WALL:
+		position += 1*(Info->epa_info.normal * Info->epa_info.distance);
+		//printf("{%f %f} %f\n",Info->epa_info.normal.x,Info->epa_info.normal.y, Info->epa_info.distance);
+	break;
+	default:
+		;
 	}
 }
 
