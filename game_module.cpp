@@ -105,7 +105,7 @@ void spawn_player(){
 	player->set_color(player_color);
 	player->set_on_dead(on_player_dead);
 	player_controller->set_control_unit(player);
-	
+	artificial_player_controller->set_enemy_unit(player);
 }
 
 void spawn_enemy(){
@@ -113,14 +113,16 @@ void spawn_enemy(){
 	enemy->set_color(enemy_color);
 	enemy->set_on_dead(on_enemy_dead);
 	artificial_player_controller->set_control_unit(enemy);
-	artificial_player_controller->set_enemy_unit(player);
-	
+
 }
 
 void start_round(){
-	spawn_player();
+	if(!player)
+		spawn_player();
 	//player->set_invul(true);
-	spawn_enemy();
+	
+	if(!enemy)
+		spawn_enemy();
 	//enemy->set_invul(true);
 	
 }
@@ -128,11 +130,12 @@ void start_round(){
 void end_round(){
 	round_begin = true;
 	start_timer->set(start_time);
+	/*
 	despawn(player);
 	despawn(enemy);
-	artificial_player_controller->set_control_unit(nullptr);
-	artificial_player_controller->set_enemy_unit(nullptr);
-	player_controller->set_control_unit(nullptr);
+	*/
+	
+	
 	
 	printf("Player % d Enemy % d\n",counter_player, counter_enemy);
 
@@ -149,6 +152,10 @@ void on_player_dead(GAME_OBJECT* Killer){
 		if(bullet->get_owner() == enemy){
 			counter_enemy++;
 		}
+		
+		player_controller->set_control_unit(nullptr);
+		artificial_player_controller->set_enemy_unit(nullptr);
+		player = nullptr;
 	}
 	
 	end_round();
@@ -165,6 +172,9 @@ void on_enemy_dead(GAME_OBJECT* Killer){
 		if(bullet->get_owner() == player){
 			counter_player++;
 		}
+		
+		artificial_player_controller->set_control_unit(nullptr);
+		enemy = nullptr;
 	}
 	
 	end_round();
@@ -263,7 +273,8 @@ void ENGINE::compute(double Frame_time){
 
 void ENGINE::pre_render(){
 	if(camera_focus){
-		scene.camera.set_position	(player->get_position());
+		if(player)
+			scene.camera.set_position	(player->get_position());
 	
 	}
 	//scene.camera.set_normal	(player->get_normal());
