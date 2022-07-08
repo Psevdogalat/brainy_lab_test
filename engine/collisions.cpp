@@ -198,7 +198,7 @@ void epa_insert_vertex(VECTOR2D* Polytope , UINT& Polytope_size, UINT Index, VEC
 EPA_INFO epa_collision_info(
 	const VECTOR2D* Vertices1, UINT  Vertices1_quantity, 
 	const VECTOR2D* Vertices2, UINT  Vertices2_quantity,
-	const VECTOR2D(&Simplex)[3] 	
+	const VECTOR2D* Simplex 	
 ){
 	EPA_INFO 		info;
 	VECTOR2D*		polytope;

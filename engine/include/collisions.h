@@ -40,6 +40,6 @@
 	
 	EPA_EDGE_INFO 	epa_find_closest_edge(const VECTOR2D*, UINT );
 	void 			epa_insert_vertex	 (VECTOR2D*, UINT& , UINT , VECTOR2D );
-	EPA_INFO 		epa_collision_info	 (const VECTOR2D*, UINT  , const VECTOR2D*	, UINT, const VECTOR2D(&)[3]);
+	EPA_INFO 		epa_collision_info	 (const VECTOR2D*, UINT  , const VECTOR2D*	, UINT, const VECTOR2D*);
 	
 #endif
