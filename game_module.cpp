@@ -15,7 +15,11 @@
 using namespace GAME_ENGINE;
 
 static const double rot_angle_quant = M_PI/32;
-double 			camera_scale;
+double 			camera_scale		= 0.05;
+VECTOR2D 		camera_proportion	= {1.5, 1.0};
+VECTOR2D 		mouse_last	 		= {0.0, 0.0};
+VECTOR2D 		mouse_coord 		= {0.0, 0.0};
+
 bool 			camera_focus 		= false;
 bool			draw_collisions		= true;
 
@@ -34,27 +38,25 @@ GAME_OBJECT_PLAYER* enemy;
 RGB_COLOR			enemy_color(1.0f, 0.0f, 0.0f);
 
 TIMER* start_timer;
-double start_time	=	3.0;
+double start_time	=	0.5;
 bool   round_begin;
 
 UINT   counter_player;
 UINT   counter_enemy;
 
 void build_walls(){
-	static const UINT NUM_OF_WALLS = 11;
-	
 	VECTOR2D 		p_coord; 	
 	VECTOR2D 		e_coord;	
 	
 	p_coord = player_spawn->get_position();
 	e_coord = enemy_spawn->get_position();
 	
-	struct{
+	struct wall_info{
 		VECTOR2D	position;
 		VECTOR2D	normal;
 		double		width;
 		double 		height;
-	}walls_info[NUM_OF_WALLS] = {
+	}walls_info[] = {
 		{p_coord + vector2d( 0.00, 1.25)	,create_normal() 	, 3.0, 0.5},
 		{p_coord + vector2d( 0.00,-1.25)	,create_normal() 	, 3.0, 0.5},
 		{p_coord + vector2d(-1.25, 0.00)	,create_normal() 	, 0.5, 2.0},
@@ -66,10 +68,15 @@ void build_walls(){
 		{vector2d( 3.0, 5.0)				, vector2d(1.0, 0.0), 2.0, 2.0},
 		{vector2d(-3.0,-5.0)				, vector2d(1.0, 0.0), 2.0, 2.0},
 		{vector2d(-5.0, 5.0)				, vector2d(1.0, 1.0), 4.0, 2.0},
-		{vector2d( 5.0,-5.0)				, vector2d(1.0, 1.0), 4.0, 2.0}
+		{vector2d( 5.0,-5.0)				, vector2d(1.0, 1.0), 4.0, 2.0},
+		
+		{vector2d( 0.0  , 8.75)				, create_normal(), 30.0, 0.5},
+		{vector2d( 0.0  ,-8.75)				, create_normal(), 30.0, 0.5},
+		{vector2d(-14.75, 0.0)				, create_normal(), 0.5 , 17.0},
+		{vector2d( 14.75, 0.0)				, create_normal(), 0.5 , 17.0}
 	};
 	
-	for(UINT i = 0; i < NUM_OF_WALLS; i++)
+	for(UINT i = 0; i < (sizeof(walls_info)/sizeof(wall_info)); i++)
 		spawn(
 			new GAME_OBJECT_WALL(walls_info[i].width, walls_info[i].height, RGB_COLOR(0.0f, 0.5f, 0.0f)), 
 			walls_info[i].position, 
@@ -112,7 +119,9 @@ void spawn_enemy(){
 
 void start_round(){
 	spawn_player();
+	//player->set_invul(true);
 	spawn_enemy();
+	//enemy->set_invul(true);
 	
 }
 
@@ -131,7 +140,7 @@ void end_round(){
 
 void on_player_dead(GAME_OBJECT* Killer){
 	GAME_OBJECT_BULLET* bullet;
-	if(Killer->get_type() == GAME_OBJECT::GOT_BULLET){
+	if(Killer->get_type() == GOT_BULLET){
 		bullet = (GAME_OBJECT_BULLET*) Killer;
 		if(bullet->get_owner() == player){
 			counter_player--;
@@ -147,7 +156,7 @@ void on_player_dead(GAME_OBJECT* Killer){
 
 void on_enemy_dead(GAME_OBJECT* Killer){
 	GAME_OBJECT_BULLET* bullet;
-	if(Killer->get_type() == GAME_OBJECT::GOT_BULLET){
+	if(Killer->get_type() == GOT_BULLET){
 		bullet = (GAME_OBJECT_BULLET*) Killer;
 		if(bullet->get_owner() == enemy){
 			counter_enemy--;
@@ -293,7 +302,36 @@ void ENGINE::event(const EVENT_MSG& Event){
 			
 		break;
 		case EV_MOUSE_MOVE:
-			//printf("B!\n");
+			mouse_coord = scale_vector(vector2d(mouse_record.x , mouse_record.y),camera_proportion);
+			if(key_state(KEY_MOUSE_M)){
+				VECTOR2D position;
+				if(!camera_focus){
+					position = scene.camera.get_position();
+					position -= scale_vector(mouse_coord - mouse_last,0.5/camera_scale);
+					scene.camera.set_position(position);
+				}
+				mouse_last = mouse_coord;
+			}
+		break;
+		case EV_MOUSE_MKEY_DOWN:
+			toggle_key_down(KEY_MOUSE_M);
+			mouse_coord = scale_vector(vector2d(mouse_record.x , mouse_record.y),camera_proportion);
+			mouse_last = mouse_coord;
+		break;
+		case EV_MOUSE_MKEY_UP:
+			toggle_key_up(KEY_MOUSE_M);
+		break;
+		case EV_MOUSE_LKEY_DOWN:
+			toggle_key_down(KEY_MOUSE_L);
+		break;
+		case EV_MOUSE_LKEY_UP:
+			toggle_key_up(KEY_MOUSE_L);
+		break;
+		case EV_MOUSE_RKEY_DOWN:
+			toggle_key_down(KEY_MOUSE_R);
+		break;
+		case EV_MOUSE_RKEY_UP:
+			toggle_key_up(KEY_MOUSE_R);
 		break;
 	}
 }
