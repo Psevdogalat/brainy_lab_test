@@ -194,10 +194,16 @@ void ENGINE::init_scene(){
 	shape1.set_vertex(3, vector2d(-1.0,-1.0));
 	
 	
-	VECTOR_SHAPE shape2(vector2d(0.0, 0.0), create_normal(), 3);
+	VECTOR_SHAPE shape2(vector2d(0.0, 0.0), create_normal(), 4);
+	/*
 	shape2.set_vertex(0, vector2d(-1.0,-1.0));
 	shape2.set_vertex(1, vector2d( 1.0,-1.0));
 	shape2.set_vertex(2, vector2d( 0.0, 1.0));
+	*/
+	shape2.set_vertex(0, vector2d(-1.0, 1.0));
+	shape2.set_vertex(1, vector2d( 1.0, 1.0));
+	shape2.set_vertex(2, vector2d( 1.0,-1.0));
+	shape2.set_vertex(3, vector2d(-1.0,-1.0));
 	
 	
 	object1 = spawn(new GAME_OBJECT(), vector2d(0.0, 0.0), create_normal());
@@ -210,7 +216,7 @@ void ENGINE::init_scene(){
 		object1->set_graphic_model(model);
 		//object1->set_visible(false);
 	
-	object2 = spawn(new GAME_OBJECT(), vector2d(0.0, 0.0), create_normal());
+	object2 = spawn(new GAME_OBJECT(), vector2d(5.0, 0.0), create_normal());
 		object2->set_name("Object2");
 
 		model = new GRAPHIC_MODEL_VECTOR();
@@ -358,6 +364,46 @@ void ENGINE::compute(double Frame_time){
 	shape3 = operation_composite(shape2 , shape1, epa_intersection);
 	shape4 = operation_composite(shape2 , shape1, minkovskiy_diff);
 	
+	VECTOR2D* simplex;
+	UINT	  simplex_size;
+	UINT	  vertices1_quantity;
+	UINT	  vertices2_quantity;
+	VECTOR2D* vertices1;
+	VECTOR2D* vertices2;
+	EPA_INFO  epa_info;
+	
+	vertices1_quantity = shape1.get_vertices_quantity();
+	vertices2_quantity = shape2.get_vertices_quantity();
+	
+	vertices1 = new VECTOR2D[vertices1_quantity];
+	for(UINT i = 0; i < vertices1_quantity; i++)
+		shape1.get_vertex(i,vertices1[i]);
+	
+	vertices2 = new VECTOR2D[vertices2_quantity];
+	for(UINT i = 0; i < vertices2_quantity; i++)
+		shape2.get_vertex(i,vertices2[i]);
+	
+	
+	if(gjk_collision(
+		vertices2,vertices2_quantity,
+		vertices1,vertices1_quantity,
+		simplex  , simplex_size)
+	){
+		epa_info = epa_collision_info(
+			vertices2, vertices2_quantity,
+			vertices1, vertices1_quantity,
+			(const VECTOR2D*)simplex
+		);
+		
+		delete [] simplex;
+		printf("{%f %f} %f\n",epa_info.normal.x, epa_info.normal.y, epa_info.distance);
+	}
+		
+	
+	delete [] vertices1;
+	delete [] vertices2;
+	
+
 	model = (GRAPHIC_MODEL_VECTOR*)object3->get_graphic_model();
 	model->set_vector_object(&shape4);
 	
