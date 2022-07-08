@@ -16,6 +16,7 @@
 	VECTOR2D& 	operator+=(		 VECTOR2D&, const VECTOR2D& );
 	VECTOR2D& 	operator-=(	 	 VECTOR2D&, const VECTOR2D& );
 	VECTOR2D	operator* (const VECTOR2D&, double );
+	VECTOR2D	operator* (double , const VECTOR2D&);
 	VECTOR2D	operator/ (const VECTOR2D&, double );
 	VECTOR2D&	operator*=( 	 VECTOR2D&, double );
 	VECTOR2D&	operator/=(		 VECTOR2D&, double );
@@ -31,6 +32,7 @@
 	VECTOR2D rotate_vector		(const VECTOR2D&, const VECTOR2D& );
 	VECTOR2D scale_vector		(const VECTOR2D&, double);
 	VECTOR2D scale_vector		(const VECTOR2D&, const VECTOR2D& );
+	VECTOR2D mirror_vector		(const VECTOR2D&, const VECTOR2D& );
 	VECTOR2D transform_vertex	(const VECTOR2D&, const VECTOR2D&, const VECTOR2D&, double );
 	
 	class VECTOR_OBJECT{

@@ -374,10 +374,6 @@ void ENGINE::render(){
 	if(draw_graphic_models)
 		for(GAME_OBJECT* game_object: scene.game_objects){
 			
-			if(game_object->get_type() == GAME_OBJECT::GOT_PLAYER){
-				game_object->get_type();
-			}
-			
 			if(!game_object->is_visible())continue;
 			
 			graphic_model = game_object->get_graphic_model();

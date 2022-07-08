@@ -46,6 +46,10 @@ VECTOR2D  operator* (const VECTOR2D& V, double Multiplier){
 	return r_vector;
 }
 
+VECTOR2D operator* (double Multiplier, const VECTOR2D& V){
+	return V * Multiplier;
+}
+
 VECTOR2D  operator/ (const VECTOR2D& V, double Divider){
 	VECTOR2D r_vector;
 	r_vector.x = V.x / Divider;
@@ -141,6 +145,11 @@ VECTOR2D scale_vector(const VECTOR2D& V, const VECTOR2D& Scale_vector){
 	r_vector.y = V.y * Scale_vector.y;
 	
 	return r_vector;
+}
+
+VECTOR2D mirror_vector(const VECTOR2D& V, const VECTOR2D& Direction){
+	VECTOR2D normal = normalize_vector(Direction);
+	return V - 2 * scalar_product2d(V,normal)* normal; 
 }
 
 VECTOR2D transform_vertex(const VECTOR2D& Vertex,const VECTOR2D& Position, const VECTOR2D& Normal, double Scale ){

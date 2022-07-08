@@ -29,6 +29,26 @@
 		
 		class COLLISION_NODE; //for cross reference;
 		
+		//objects collision info struct
+		typedef struct{
+			COLLISION_NODE* 				node;
+			enum{TYPE_RAW_GJK,TYPE_EPA} 	type;
+			
+			union{			
+				VECTOR2D 		simplex[3];
+				EPA_INFO		epa_info;
+			};
+			
+		}COLLISION_INFO;
+		
+		//collision list type definition
+		typedef std::list<COLLISION_INFO> COLLISIONS_LIST;
+		
+		//default game object type 
+		static const UINT GOT_UNDEFINE 	= 0;
+		
+		//game object class
+		//base class for all game objects in scenes
 		class GAME_OBJECT{
 			protected:
 				bool visible;
@@ -43,12 +63,7 @@
 				PHYSICAL_MODEL*		physical_model;
 				COLLISION_NODE*		collision_node;
 
-			public:
-				static const UINT GOT_UNDEFINE 	= 0;
-				static const UINT GOT_POINT		= 1;
-				static const UINT GOT_WALL		= 2;
-				static const UINT GOT_BULLET	= 3;
-				static const UINT GOT_PLAYER	= 4;	
+			public:	
 				
 				GAME_OBJECT();
 				GAME_OBJECT(const char*, const VECTOR2D&, const VECTOR2D& );
@@ -57,7 +72,7 @@
 				
 				//virtual GAME_OBJECT* 	new_copy() = 0;
 				virtual void compute();
-				virtual void collision(GAME_OBJECT* );
+				virtual void collision(GAME_OBJECT* , const COLLISION_INFO* );
 				virtual void spawn();
 				virtual void despawn();
 				
@@ -86,20 +101,9 @@
 				VECTOR2D		get_normal			();
 				
 		};
-		
-		typedef struct{
-			COLLISION_NODE* 	node;
-			enum{TYPE_RAW_GJK,TYPE_EPA} 	type;
-			
-			union{			
-				VECTOR2D 		simplex[3];
-				EPA_INFO		epa_info;
-			};
-			
-		}COLLISION_INFO;
-		
-		typedef std::list<COLLISION_INFO> COLLISIONS_LIST;
-		
+
+		//class of collision node
+		//collision node used in compute collisions
 		class COLLISION_NODE{
 			protected:
 				GAME_OBJECT*		game_object;

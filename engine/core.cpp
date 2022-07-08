@@ -88,6 +88,7 @@ using namespace GAME_ENGINE;
 		bool 				collised;
 		
 		COLLISION_INFO 		info;
+		COLLISION_INFO		info_partner;
 		
 		GAME_OBJECT*		object1;
 		GAME_OBJECT*		object2;
@@ -130,6 +131,8 @@ using namespace GAME_ENGINE;
 					(const VECTOR2D)object1->get_position(),
 					(const VECTOR2D)object1->get_normal(), 
 					1.0);
+			
+			
 					
 			vertices2_quantity 	= collision_model2->get_vertices_quantity();
 			model_vertices2 	= collision_model2->get_vertices();
@@ -142,8 +145,8 @@ using namespace GAME_ENGINE;
 					1.0);
 			
 			if(gjk_collision(
-				vertices1, 	vertices1_quantity,
 				vertices2, 	vertices2_quantity,
+				vertices1, 	vertices1_quantity,
 				simplex, 	simplex_size)
 			){
 				info.node = Partner_node;
@@ -151,9 +154,9 @@ using namespace GAME_ENGINE;
 				if(epa && Partner_node->epa){
 					info.type = COLLISION_INFO::TYPE_EPA;
 					info.epa_info =  epa_collision_info(
-						vertices1, vertices1_quantity,
 						vertices2, vertices2_quantity,
-						(const VECTOR2D(&)[3])simplex
+						vertices1, vertices1_quantity,
+						(const VECTOR2D*)simplex
 					);
 					
 				}else{
@@ -166,11 +169,12 @@ using namespace GAME_ENGINE;
 				add_collision(info);
 				
 				if(Partner_node->is_active()){
-					info.node = this;
+					info_partner = info;
+					info_partner.node = this;
 					if(info.type == COLLISION_INFO::TYPE_EPA){
-						info.epa_info.normal *= -1.0;
+						info_partner.epa_info.normal *= -1.0;
 					}
-					Partner_node->add_collision(info);
+					Partner_node->add_collision(info_partner);
 				}
 				
 				delete [] simplex;
@@ -183,7 +187,7 @@ using namespace GAME_ENGINE;
 			
 		}
 		if(collised){
-			object1->collision(object2);
+			object1->collision(object2, &info);
 		
 		}
 	}
@@ -192,7 +196,7 @@ using namespace GAME_ENGINE;
 /* basic game object class */
 //=================================================================================================
 	GAME_OBJECT::GAME_OBJECT(){
-		type 			= GAME_OBJECT::GOT_UNDEFINE;
+		type 			= GOT_UNDEFINE;
 		
 		visible 		= true;
 		
@@ -239,7 +243,7 @@ using namespace GAME_ENGINE;
 	
 	void GAME_OBJECT::compute(){ };
 	
-	void GAME_OBJECT::collision(GAME_OBJECT* Object){
+	void GAME_OBJECT::collision(GAME_OBJECT* Object, const COLLISION_INFO* Param){
 		//printf("GO %s collision with GO %s\n", get_name(), Object->get_name());
 	};
 	
@@ -532,14 +536,16 @@ using namespace GAME_ENGINE;
 	}
 	
 	void ENGINE::compute_collisions	(){
-		for(COLLISION_NODE* active_collision : scene.active_collisions)
-		for(COLLISION_NODE* passive_collision: scene.passive_collisions){
-			if(active_collision == passive_collision)
-				continue;
+		for(COLLISION_NODE* active_collision : scene.active_collisions){
+			for(COLLISION_NODE* passive_collision: scene.passive_collisions){
+				if(active_collision == passive_collision)
+					continue;
+				
+				active_collision->compute(passive_collision);
+			}
 			
-			active_collision->compute(passive_collision);
+			active_collision->clear_collisions();
 		}
-		
 	}
 	
 	void ENGINE::post_collisions(double Frame_time){

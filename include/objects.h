@@ -5,6 +5,11 @@
 	
 	using namespace GAME_ENGINE;
 	
+	static const UINT GOT_POINT		= 1;
+	static const UINT GOT_WALL		= 2;
+	static const UINT GOT_BULLET	= 3;
+	static const UINT GOT_PLAYER	= 4;
+	
 	class METRIC_GRID: public GAME_OBJECT{
 		protected:
 			double 		width;
@@ -41,6 +46,7 @@
 			TIMER*		 life_timer;
 			double 		 life_time;
 			double 		 move_speed;
+			UINT 		 bounce_resource;
 
 		public:
 			GAME_OBJECT_BULLET();
@@ -48,7 +54,7 @@
 			void spawn	();
 			void despawn();
 			void compute();
-			void collision(GAME_OBJECT* );
+			void collision(GAME_OBJECT*, const COLLISION_INFO* );
 			
 			void 			set_owner(GAME_OBJECT* );
 			GAME_OBJECT*	get_owner();
@@ -82,7 +88,7 @@
 			void spawn		();
 			void despawn	();
 			void compute	();
-			void collision	(GAME_OBJECT* );
+			void collision	(GAME_OBJECT*, const COLLISION_INFO* );
 			
 			void set_color	(RGB_COLOR );
 			
