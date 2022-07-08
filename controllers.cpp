@@ -67,6 +67,11 @@ void ARTIFICIAL_PLAYER_CONTROLLER::init(){
 }
 
 void ARTIFICIAL_PLAYER_CONTROLLER::compute(){
+	VECTOR2D	enemy_position;
+	VECTOR2D	own_position;
+	VECTOR2D 	direction_to_enemy;
+	VECTOR2D 	own_direction;
+	double 		distance;
 	
 	if(control_unit != nullptr){
 		
@@ -74,9 +79,33 @@ void ARTIFICIAL_PLAYER_CONTROLLER::compute(){
 			control_unit->fire();
 		
 		if(enemy_unit != nullptr){
-			control_unit->set_normal(normalize_vector(
-				enemy_unit->get_position() - control_unit->get_position()
-			));
+			own_position 		= control_unit->get_position();
+			enemy_position		= enemy_unit->get_position();
+			own_direction 		= control_unit->get_normal();
+			direction_to_enemy	= normalize_vector(enemy_position - own_position);
+			
+			distance = vector_length(enemy_position - own_position);
+			
+			if( (1.0 - scalar_product2d(own_direction, direction_to_enemy)) > 0.001)
+				if(vector_product2d(own_direction, direction_to_enemy) > 0 ){
+					control_unit->rotate_left();
+				}else{
+					control_unit->rotate_right();
+				}
+			
+			if( distance > 4){
+				if(scalar_product2d(own_direction, direction_to_enemy) > 0){
+					control_unit->move_forward();
+				}else
+					control_unit->move_backward();
+			}
+			
+			if( distance < 3.5){
+				if(scalar_product2d(own_direction, direction_to_enemy) < 0){
+					control_unit->move_forward();
+				}else
+					control_unit->move_backward();
+			}
 		}
 		
 		if(dummy_timer->condition()){
