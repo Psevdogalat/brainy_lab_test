@@ -102,10 +102,14 @@ double vector_product2d(const VECTOR2D& V1, const VECTOR2D& V2){
 	return V1.x * V2.y - V2.x * V1.y;
 }
 
+double 	 vector_length		(const VECTOR2D& V){
+	return sqrt(scalar_product2d(V,V));
+}
+
 VECTOR2D normalize_vector(const VECTOR2D& V){
 	double 		v_length;
 	
-	v_length = sqrt(scalar_product2d(V,V));
+	v_length = vector_length(V);
 	
 	if(v_length == 0)
 		return create_normal();

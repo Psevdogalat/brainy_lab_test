@@ -27,6 +27,7 @@
 	VECTOR2D create_normal		();
 	double	 scalar_product2d	(const VECTOR2D&, const VECTOR2D&);
 	double 	 vector_product2d	(const VECTOR2D&, const VECTOR2D&);
+	double 	 vector_length		(const VECTOR2D& );
 	VECTOR2D normalize_vector	(const VECTOR2D& );
 	VECTOR2D rotate_vector		(const VECTOR2D&, double);
 	VECTOR2D rotate_vector		(const VECTOR2D&, const VECTOR2D& );
