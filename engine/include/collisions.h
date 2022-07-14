@@ -28,8 +28,8 @@
 		COLLISION_MODEL(const VECTOR_SHAPE& );
 		~COLLISION_MODEL();
 		
-		UINT 			get_vertices_quantity();
-		const VECTOR2D*	get_vertices();
+		UINT 			get_vertices_quantity() const;
+		const VECTOR2D*	get_vertices() const;
 		
 	};
 

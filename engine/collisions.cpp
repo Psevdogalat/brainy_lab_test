@@ -25,11 +25,11 @@ COLLISION_MODEL::~COLLISION_MODEL(){
 	
 }
 
-UINT COLLISION_MODEL::get_vertices_quantity(){
+UINT COLLISION_MODEL::get_vertices_quantity() const{
 	return vertices_quantity;
 }
 
-const VECTOR2D* COLLISION_MODEL::get_vertices(){
+const VECTOR2D* COLLISION_MODEL::get_vertices() const{
 	return (const VECTOR2D*) vertices;
 }
 
