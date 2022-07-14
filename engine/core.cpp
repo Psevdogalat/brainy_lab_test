@@ -221,7 +221,7 @@ using namespace GAME_ENGINE;
 		set_collision_node	(nullptr);
 	}
 	
-	const char*	GAME_OBJECT::get_name(){
+	const char*	GAME_OBJECT::get_name() const{
 		return (const char*) name;
 	}
 	
@@ -237,7 +237,7 @@ using namespace GAME_ENGINE;
 		}
 	}
 	
-	const UINT GAME_OBJECT::get_type(){
+	const UINT GAME_OBJECT::get_type() const{
 		return type;
 	}
 	
@@ -256,7 +256,7 @@ using namespace GAME_ENGINE;
 		
 	}
 	
-	GRAPHIC_MODEL* GAME_OBJECT::get_graphic_model(){
+	GRAPHIC_MODEL* GAME_OBJECT::get_graphic_model() const{
 		return graphic_model;
 	}
 	
@@ -264,7 +264,7 @@ using namespace GAME_ENGINE;
 			visible = Visible;
 	}
 	
-	bool GAME_OBJECT::is_visible(){
+	bool GAME_OBJECT::is_visible() const{
 		if(graphic_model != nullptr && visible)
 			return true;
 		
@@ -276,11 +276,11 @@ using namespace GAME_ENGINE;
 		collision_node = Node;
 	}
 
-	COLLISION_NODE* GAME_OBJECT::get_collision_node(){
+	COLLISION_NODE* GAME_OBJECT::get_collision_node() const{
 		return collision_node;
 	}
 	
-	bool GAME_OBJECT::is_collisible(){
+	bool GAME_OBJECT::is_collisible() const{
 		if(collision_node != nullptr)
 			return true;
 			
@@ -288,15 +288,15 @@ using namespace GAME_ENGINE;
 	}
 	
 	//-------------------------------------------------------------------------
-	PHYSICAL_MODEL*	GAME_OBJECT::get_physical_model(){
-		return physical_model;
-	}
-	
 	void GAME_OBJECT::set_physical_model(PHYSICAL_MODEL* Model_ptr){	
 		physical_model = Model_ptr;
 	}
 	
-	bool GAME_OBJECT::is_physical(){
+	PHYSICAL_MODEL*	GAME_OBJECT::get_physical_model() const{
+		return physical_model;
+	}
+	
+	bool GAME_OBJECT::is_physical() const{
 		if(physical_model != nullptr)
 			return true;
 		
@@ -311,7 +311,7 @@ using namespace GAME_ENGINE;
 			physical_model->position = position;	
 	}
 	
-	VECTOR2D	GAME_OBJECT::get_position(){
+	VECTOR2D	GAME_OBJECT::get_position() const{
 		return position;
 	}
 	
@@ -322,7 +322,7 @@ using namespace GAME_ENGINE;
 			physical_model->normal = normal;
 	}
 	
-	VECTOR2D	GAME_OBJECT::get_normal(){
+	VECTOR2D	GAME_OBJECT::get_normal() const{
 		return normal;
 	}
 	
@@ -513,6 +513,10 @@ using namespace GAME_ENGINE;
 		
 		delete Node;
 	}
+	
+	const COLLISION_NODE_LIST* ENGINE::get_passive_collision_list(){
+		return &scene.passive_collisions;
+	}
 
 	void ENGINE::compute_physics(double Frame_time){
 		PHYSICAL_MODEL* 	physical_model;
@@ -663,6 +667,10 @@ using namespace GAME_ENGINE;
 	
 	void GAME_ENGINE::free_collision_node(COLLISION_NODE* Node){
 		engine.free_collision_node(Node);
+	}
+	
+	const COLLISION_NODE_LIST* GAME_ENGINE::get_passive_collision_list(){
+		return engine.get_passive_collision_list();
 	}
 
 	GAME_OBJECT* GAME_ENGINE::spawn(GAME_OBJECT* Object, const VECTOR2D& Position, const VECTOR2D& Normal){

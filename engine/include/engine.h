@@ -76,29 +76,29 @@
 				virtual void spawn();
 				virtual void despawn();
 				
-				const char*		get_name();
+				const char*		get_name() const;
 				void 			set_name(const char* );
 				
-				const UINT 		get_type();
+				const UINT 		get_type() const;
 				
 				void 			set_graphic_model	(GRAPHIC_MODEL* );
-				GRAPHIC_MODEL* 	get_graphic_model	();
+				GRAPHIC_MODEL* 	get_graphic_model	() const;
 				void 			set_visible			(bool );
-				bool 			is_visible			();
+				bool 			is_visible			() const;
 				
 				void 			 set_collision_node	(COLLISION_NODE* );
-				COLLISION_NODE*  get_collision_node	();
-				bool			 is_collisible		();
+				COLLISION_NODE*  get_collision_node	() const;
+				bool			 is_collisible		() const;
 				
 				void 			set_physical_model	(PHYSICAL_MODEL* );
-				PHYSICAL_MODEL*	get_physical_model	();
-				bool			is_physical			();
+				PHYSICAL_MODEL*	get_physical_model	() const;
+				bool			is_physical			() const;
 				
 				void 			set_position		(const VECTOR2D& );
-				VECTOR2D		get_position		();
+				VECTOR2D		get_position		() const;
 				
 				void 			set_normal			(const VECTOR2D& );
-				VECTOR2D		get_normal			();
+				VECTOR2D		get_normal			() const;
 				
 		};
 
@@ -210,6 +210,7 @@
 				GAME_OBJECT* 	spawn_game_object		(GAME_OBJECT*, const VECTOR2D&, const VECTOR2D& );
 				void 			despawn_game_object		(GAME_OBJECT* );
 				
+				const COLLISION_NODE_LIST* get_passive_collision_list();
 		};
 		
 		
@@ -230,6 +231,8 @@
 		
 		COLLISION_NODE*		allocate_collision_node	(GAME_OBJECT*, bool, bool, bool, COLLISION_MODEL* );
 		void				free_collision_node		(COLLISION_NODE* );
+		
+		const COLLISION_NODE_LIST* get_passive_collision_list();
 		
 		GAME_OBJECT* 		spawn					(GAME_OBJECT*, const VECTOR2D&, const VECTOR2D& );
 		void 				despawn					(GAME_OBJECT* );
