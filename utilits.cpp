@@ -1,12 +1,19 @@
 #include <utilits.h>
 
-VECTOR_POLYLINE create_arrow(){
-	VECTOR_POLYLINE polyline(vector2d(0.0, 0.0), create_normal(),4);
+GRAPHIC_MODEL* create_arrow_model(){
+	GRAPHIC_MODEL_VECTOR* r_model;
+	
+	VECTOR_POLYLINE polyline(vector2d(0.0, 0.0), create_normal(),6);
 	polyline.set_vertex(0, vector2d(0.0, 0.0));
-	polyline.set_vertex(1, vector2d(1.0, 0.0));
+	polyline.set_vertex(1, vector2d(0.9, 0.0));
 	polyline.set_vertex(2, vector2d(0.9, 0.1));
-	polyline.set_vertex(3, vector2d(0.9, 0.0));
-	return polyline;
+	polyline.set_vertex(3, vector2d(1.0, 0.0));
+	polyline.set_vertex(4, vector2d(0.9,-0.1));
+	polyline.set_vertex(5, vector2d(0.9, 0.0));
+	
+	r_model = new GRAPHIC_MODEL_VECTOR();
+	r_model->set_vector_object(&polyline);
+	return r_model;
 }
 
 GRAPHIC_MODEL* create_point_model(){

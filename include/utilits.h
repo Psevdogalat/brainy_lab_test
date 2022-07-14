@@ -3,6 +3,7 @@
 
 	#include <engine.h>
 	
+	GRAPHIC_MODEL* create_arrow_model();
 	GRAPHIC_MODEL* create_point_model();
 	GRAPHIC_MODEL* create_grid_model(double, double);
 	GRAPHIC_MODEL* create_base_unit_model();
