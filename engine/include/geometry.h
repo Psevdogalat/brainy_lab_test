@@ -5,6 +5,8 @@
 	#include <cmath>
 	#include <list>
 	
+	#define _GEOMETRY_ATTR_ inline
+	
 	typedef struct{
 		double	x;
 		double  y;
@@ -35,6 +37,7 @@
 	VECTOR2D scale_vector		(const VECTOR2D&, const VECTOR2D& );
 	VECTOR2D mirror_vector		(const VECTOR2D&, const VECTOR2D& );
 	VECTOR2D transform_vertex	(const VECTOR2D&, const VECTOR2D&, const VECTOR2D&, double );
+	VECTOR2D left_orto_normal	(const VECTOR2D& );
 	
 	class VECTOR_OBJECT{
 		protected:

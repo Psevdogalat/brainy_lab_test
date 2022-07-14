@@ -160,6 +160,10 @@ VECTOR2D transform_vertex(const VECTOR2D& Vertex,const VECTOR2D& Position, const
 	return rotate_vector(Vertex, Normal) * Scale + Position;
 }
 
+VECTOR2D left_orto_normal	(const VECTOR2D& V){
+	return normalize_vector(vector2d(-V.y, V.x));
+}
+
 /* class VECTOR_OBJECT */
 
 VECTOR_OBJECT::VECTOR_OBJECT(){
