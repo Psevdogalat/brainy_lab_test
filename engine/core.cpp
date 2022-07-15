@@ -326,9 +326,34 @@ using namespace GAME_ENGINE;
 		return normal;
 	}
 	
-	
-	
+/* class GAME_OBJECT_FILTER */
+//=================================================================================================
+	GAME_OBJECT_FILTER::GAME_OBJECT_FILTER(){
+			filter_func = default_filt;
+			inverse 	= false;
+	}
 
+	GAME_OBJECT_FILTER::~GAME_OBJECT_FILTER(){
+		
+	}
+
+	bool GAME_OBJECT_FILTER::filt(const GAME_OBJECT* Object) const{
+		if(!filter_func)
+			return true;
+		
+		return filter_func(pointers, Object) != inverse;
+	}
+
+	bool GAME_OBJECT_FILTER::default_filt(const std::list<GAME_OBJECT*>& Pointers, const GAME_OBJECT* Object){
+		
+		for(GAME_OBJECT* target: Pointers){
+			if(Object == target)
+				return true;
+		}
+			
+		return false;
+	}
+	
 /* class CAMERA */
 //=================================================================================================
 	CAMERA::CAMERA(){
@@ -398,6 +423,92 @@ using namespace GAME_ENGINE;
 		
 		printf("scene destruct!\n");
 	}
+	
+	bool SCENE::bouncing_raycast(
+		const VECTOR2D& Origin, const VECTOR2D& Direction, 
+		const GAME_OBJECT_FILTER* Filter, const GAME_OBJECT_FILTER* Stop_filter, 
+		UINT Bounce_limit, RAYCAST_INFO_LIST& Info_list 
+	){
+		UINT		 intersections;
+		RAYCAST_INFO info;
+		VECTOR2D	 origin;
+		VECTOR2D	 direction;
+		
+		intersections	= 0;	
+		origin 			= Origin;
+		direction		= Direction;
+		
+		while(raycast(origin, direction, Filter, info)){
+			intersections++;
+			Info_list.push_back(info);
+			
+			if(Stop_filter && Stop_filter->filt(info.object))
+				break;
+			
+			if(Bounce_limit == intersections - 1)
+				break;
+			
+			origin 		+= direction * info.distance;
+			direction	= mirror_vector(direction, info.normal);
+		}
+		
+		if(intersections)
+			return true;
+		
+		return false;
+	}
+
+	bool SCENE::raycast(const VECTOR2D& Origin, const VECTOR2D& Direction,const GAME_OBJECT_FILTER* Filter, RAYCAST_INFO& Info){
+		
+		const GAME_OBJECT*			object;
+		const COLLISION_NODE_LIST*	collisions_list;
+		const COLLISION_MODEL*		collision_model;
+		const VECTOR2D*				model_vertices;
+		VECTOR2D*					vertices;
+		UINT						vertices_quantity;
+		double 						distance;
+		VECTOR2D					normal;
+		RAYCAST_INFO				info;
+		
+		info.object 	= nullptr;
+		collisions_list	= (const COLLISION_NODE_LIST*)&passive_collisions;
+		
+		for(COLLISION_NODE* node: *collisions_list){
+			object = node->get_game_object();
+			
+			if(Filter && !Filter->filt(object))
+				continue;
+			
+			collision_model 	= node->get_collision_model();
+			vertices_quantity 	= collision_model->get_vertices_quantity();
+			model_vertices		= collision_model->get_vertices();
+			
+			vertices = new VECTOR2D[vertices_quantity];
+			for(UINT i = 0; i < vertices_quantity; i++)
+				vertices[i] = transform_vertex(
+					model_vertices[i], 
+					object->get_position() - Origin, 
+					object->get_normal(), 1.0
+				);
+			
+			if(raw_raycast(Direction, vertices, vertices_quantity, distance, normal) && distance >= 0.0)
+				if(info.object == nullptr || info.distance > distance){
+					info.object 	= object;
+					info.distance	= distance;
+					info.normal		= normal;
+				}
+				
+			delete [] vertices;
+				
+		}
+
+		if(info.object){
+			Info = info;
+			return true;
+		}
+		
+		return false;
+	}	
 
 /* engine methods definition */
 //=================================================================================================

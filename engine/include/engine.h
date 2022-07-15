@@ -101,6 +101,19 @@
 				VECTOR2D		get_normal			() const;
 				
 		};
+		
+		//clss for filtering game_objects
+		class GAME_OBJECT_FILTER{
+			protected:
+				static bool default_filt(const std::list<GAME_OBJECT*>& , const GAME_OBJECT* );
+			public:
+				std::list<GAME_OBJECT*> pointers;
+				bool(* filter_func)(const std::list<GAME_OBJECT*>& , const GAME_OBJECT* );
+				bool inverse;
+				bool filt(const GAME_OBJECT* ) const;
+				GAME_OBJECT_FILTER();
+				~GAME_OBJECT_FILTER();
+		};
 
 		//class of collision node
 		//collision node used in compute collisions
@@ -147,10 +160,19 @@
 
 		};
 
+		/* raycast info type */
+		typedef struct{
+			const GAME_OBJECT* 	object;
+			VECTOR2D			normal;
+			double 				distance;		
+		}RAYCAST_INFO;
+		
+		/*lists types */
 		typedef std::list<GAME_OBJECT* > 	GAME_OBJECTS_LIST;
 		typedef std::list<TIMER*>		 	TIMERS_LIST;
 		typedef std::list<PHYSICAL_MODEL*>	PHYSICS_LIST;
 		typedef std::list<COLLISION_NODE*>	COLLISION_NODE_LIST;
+		typedef std::list<RAYCAST_INFO> 	RAYCAST_INFO_LIST;
 
 		class SCENE{
 			public :
@@ -164,6 +186,12 @@
 			public:
 				SCENE();
 				~SCENE();
+				bool raycast(const VECTOR2D&, const VECTOR2D&, const GAME_OBJECT_FILTER*, RAYCAST_INFO& );
+				bool bouncing_raycast(
+					const VECTOR2D&, const VECTOR2D&, 
+					const GAME_OBJECT_FILTER*, const GAME_OBJECT_FILTER*, 
+					UINT, RAYCAST_INFO_LIST& 
+				);
 				
 		};	
 		
