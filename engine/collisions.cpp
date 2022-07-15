@@ -246,3 +246,46 @@ EPA_INFO epa_collision_info(
 		
 	return info;
 }
+
+/* raycast to shape implementation */
+//=================================================================================================
+bool raw_raycast(
+	const VECTOR2D& Direction, 
+	const VECTOR2D* Vertices, const UINT Vertices_quantity, 
+	double& Distance, VECTOR2D& Normal
+){
+	
+	VECTOR2D 	vertex_a;
+	VECTOR2D 	vertex_b;
+	double 		vec_a;
+	double 		vec_b;
+	double 		distance;
+	UINT		intersections;
+	
+	intersections 	= 0;
+	vertex_a 		= Vertices[Vertices_quantity-1];
+	
+	for(UINT i = 0; i < Vertices_quantity; i++){
+		vertex_b = Vertices[i];
+		
+		vec_a = vector_product2d(Direction, vertex_a);
+		vec_b = vector_product2d(Direction, vertex_b);
+		
+		if(vec_a * vec_b < 0){
+			distance 		= vector_product2d(vertex_a, vertex_b)/ (vec_b - vec_a);
+			
+			if(!intersections || Distance > distance){
+				Distance 	= distance;
+				Normal 		= left_orto_normal(vertex_b - vertex_a);
+				intersections++;
+			}
+		}
+		
+		vertex_a = vertex_b;
+	}
+	
+	if(intersections)
+		return true;
+	
+	return false;
+}

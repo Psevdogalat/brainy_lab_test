@@ -42,4 +42,6 @@
 	void 			epa_insert_vertex	 (VECTOR2D*, UINT& , UINT , VECTOR2D );
 	EPA_INFO 		epa_collision_info	 (const VECTOR2D*, UINT  , const VECTOR2D*	, UINT, const VECTOR2D*);
 	
+	bool 			raw_raycast			 (const VECTOR2D&, const VECTOR2D*, const UINT, double&, VECTOR2D&);
+	
 #endif
