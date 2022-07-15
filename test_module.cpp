@@ -26,20 +26,24 @@ typedef struct{
 	const GAME_OBJECT* 	object;
 	VECTOR2D			normal;
 	double 				distance;		
-}RAY_CAST_INFO;
+}RAYCAST_INFO;
+
+typedef std::list<RAYCAST_INFO> RAYCAST_INFO_LIST;
 
 class GAME_OBJECT_FILTER{
+	protected:
+		static bool default_filt(const std::list<GAME_OBJECT*>& , const GAME_OBJECT* );
 	public:
 		std::list<GAME_OBJECT*> pointers;
 		bool(* filter_func)(const std::list<GAME_OBJECT*>& , const GAME_OBJECT* );
 		bool inverse;
-		bool filt(const GAME_OBJECT* );
+		bool filt(const GAME_OBJECT* ) const;
 		GAME_OBJECT_FILTER();
 		~GAME_OBJECT_FILTER();
 };
 
 GAME_OBJECT_FILTER::GAME_OBJECT_FILTER(){
-		filter_func = nullptr;
+		filter_func = default_filt;
 		inverse 	= false;
 }
 
@@ -47,29 +51,48 @@ GAME_OBJECT_FILTER::~GAME_OBJECT_FILTER(){
 	
 }
 
-bool GAME_OBJECT_FILTER::filt(const GAME_OBJECT* Object){
+bool GAME_OBJECT_FILTER::filt(const GAME_OBJECT* Object) const{
 	if(!filter_func)
 		return true;
 	
 	return filter_func(pointers, Object) != inverse;
 }
 
+bool GAME_OBJECT_FILTER::default_filt(const std::list<GAME_OBJECT*>& Pointers, const GAME_OBJECT* Object){
+	
+	for(GAME_OBJECT* target: Pointers){
+		if(Object == target)
+			return true;
+	}
+		
+	return false;
+}
 
 
-bool raycast(const VECTOR2D&, const VECTOR2D&, GAME_OBJECT_FILTER*, RAY_CAST_INFO& );
+
+bool raycast(const VECTOR2D&, const VECTOR2D&, const GAME_OBJECT_FILTER*, RAYCAST_INFO& );
 bool raycast(const VECTOR2D&, const VECTOR2D*, const UINT, double&, VECTOR2D&);
+bool bouncing_raycast(
+	const VECTOR2D&, const VECTOR2D&, 
+	const GAME_OBJECT_FILTER*, const GAME_OBJECT_FILTER*, 
+	UINT, RAYCAST_INFO_LIST& 
+);
 
 static bool draw_collisions = false;
 
-static CAMERA* 	 	camera;
-static GAME_OBJECT* grid;
-static GAME_OBJECT* mov_object;
-static std::list<GAME_OBJECT*> mov_list;
+static CAMERA* 	 				camera;
+static GAME_OBJECT* 			grid;
+static GAME_OBJECT* 			mov_object;
+static std::list<GAME_OBJECT*> 	mov_list;
 
+static GAME_OBJECT*	unit;
 static GAME_OBJECT* ray_caster;
 static GAME_OBJECT* ray;
 static GAME_OBJECT* cursor;
 static GAME_OBJECT* colliding_point;
+
+static GAME_OBJECT_FILTER filter;
+static GAME_OBJECT_FILTER stop_filter;
 
 static GRAPHIC_MODEL_VECTOR*	ray_caster_model;
 static GRAPHIC_MODEL_VECTOR*	ray_model;
@@ -95,7 +118,7 @@ void build_walls(){
 		double		width;
 		double 		height;
 	}walls_info[] = {
-		{vector2d( 0.0, 0.0)				, vector2d(1.0, 0.0), 1.0, 3.0},
+		{vector2d( 3.0, 0.0)				, vector2d(1.0, 0.0), 1.0, 3.0},
 		{vector2d( 3.0, 5.0)				, vector2d(1.0, 0.0), 2.0, 2.0},
 		{vector2d(-3.0,-5.0)				, vector2d(1.0, 0.0), 2.0, 2.0},
 		{vector2d(-5.0, 5.0)				, vector2d(1.0, 1.0), 4.0, 2.0},
@@ -136,13 +159,17 @@ void ENGINE::init_scene(){
 	
 	build_walls();
 	
-	ray_caster = spawn(new GAME_OBJECT(), vector2d(0.0, 0.0), create_normal());
+	ray_caster = spawn(new GAME_OBJECT(), vector2d(-4.0, 2.0), rotate_vector(create_normal(), 2*M_PI/3));
 	ray_caster_model = (GRAPHIC_MODEL_VECTOR*) create_arrow_model();
 	ray_caster_model->push_color(RGB_COLOR(1.0f, 1.0f, 0.0f));
 	ray_caster->set_graphic_model(ray_caster_model);
 	mov_list.push_back(ray_caster);
 	
-	VECTOR_POLYLINE polyline(vector2d(0.0, 0.0), create_normal(), 2);
+	unit = spawn(new GAME_OBJECT_PLAYER(), vector2d(-8.0, 0.0), create_normal());
+	mov_list.push_back(unit);
+	stop_filter.pointers.push_back(unit);
+	
+	VECTOR_POLYLINE polyline(vector2d(0.0, 0.0), create_normal(), 10);
 	ray = spawn(new GAME_OBJECT(), vector2d(0.0, 0.0), create_normal());
 	ray_model = new GRAPHIC_MODEL_VECTOR();
 	ray_model->set_vector_object(&polyline);
@@ -164,7 +191,7 @@ void ENGINE::init_scene(){
 	cursor->set_graphic_model(cursor_model);
 	cursor->set_visible(true);
 	
-	mov_object = nullptr;
+	mov_object = ray_caster;
 }
 
 void ENGINE::free_scene(){
@@ -214,25 +241,36 @@ void ENGINE::compute(double Frame_time){
 		platform_terminate();
 	
 	
-	RAY_CAST_INFO	info;
-	VECTOR2D		ray_origin;
-	VECTOR2D		ray_direction;
-	VECTOR2D		point;
+	VECTOR_POLYLINE* 	polyline;
+	RAYCAST_INFO_LIST	info_list;
+	VECTOR2D			ray_origin;
+	VECTOR2D			ray_direction;
+	VECTOR2D			point;
 	
+	polyline 		= (VECTOR_POLYLINE*)ray_model->get_vector_object();
 	ray_origin		= ray_caster->get_position();
 	ray_direction	= ray_caster->get_normal();
 	
-	if(raycast(ray_origin, ray_direction, nullptr, info)){
-		point = ray_origin + ray_direction * info.distance;
+	if(bouncing_raycast(ray_origin, ray_direction, nullptr, &stop_filter, polyline->get_vertices_quantity()-2 ,info_list)){
+		
+		UINT i = 0;
+		point = ray_origin;
+		polyline->set_vertex(i, point);
+		for(RAYCAST_INFO info: info_list){
+			i++;
+			point = ray_origin + ray_direction * info.distance;
+			polyline->set_vertex(i, point);
+			ray_origin 		= point;
+			ray_direction 	= mirror_vector(ray_direction, info.normal); 
+		}
+		for(; i < polyline->get_vertices_quantity(); i++)
+			polyline->set_vertex(i, point);
+		
+		ray->set_visible(true);
 		
 		colliding_point->set_position(point);
 		colliding_point->set_visible(true);
 		
-		VECTOR_POLYLINE* polyline;
-		polyline = (VECTOR_POLYLINE*)ray_model->get_vector_object();
-		polyline->set_vertex(0, ray_origin);
-		polyline->set_vertex(1, point);
-		ray->set_visible(true);
 	}else{
 		colliding_point->set_visible(false);
 		ray->set_visible(false);
@@ -514,7 +552,41 @@ VECTOR_COMPOSITE operation_composite(
 	return composite;
 } 
 
-bool raycast(const VECTOR2D& Origin, const VECTOR2D& Direction, GAME_OBJECT_FILTER* Filter, RAY_CAST_INFO& Info){
+bool bouncing_raycast(
+	const VECTOR2D& Origin, const VECTOR2D& Direction, 
+	const GAME_OBJECT_FILTER* Filter, const GAME_OBJECT_FILTER* Stop_filter, 
+	UINT Bounce_limit, RAYCAST_INFO_LIST& Info_list 
+){
+	UINT		 intersections;
+	RAYCAST_INFO info;
+	VECTOR2D	 origin;
+	VECTOR2D	 direction;
+	
+	intersections	= 0;	
+	origin 			= Origin;
+	direction		= Direction;
+	
+	while(raycast(origin, direction, Filter, info)){
+		intersections++;
+		Info_list.push_back(info);
+		
+		if(Stop_filter && Stop_filter->filt(info.object))
+			break;
+		
+		if(Bounce_limit == intersections - 1)
+			break;
+		
+		origin 		+= direction * info.distance;
+		direction	= mirror_vector(direction, info.normal);
+	}
+	
+	if(intersections)
+		return true;
+	
+	return false;
+}
+
+bool raycast(const VECTOR2D& Origin, const VECTOR2D& Direction,const GAME_OBJECT_FILTER* Filter, RAYCAST_INFO& Info){
 	
 	const GAME_OBJECT*			object;
 	const COLLISION_NODE_LIST*	collisions_list;
@@ -524,7 +596,7 @@ bool raycast(const VECTOR2D& Origin, const VECTOR2D& Direction, GAME_OBJECT_FILT
 	UINT						vertices_quantity;
 	double 						distance;
 	VECTOR2D					normal;
-	RAY_CAST_INFO				info;
+	RAYCAST_INFO				info;
 	
 	info.object 	= nullptr;
 	collisions_list	= GAME_ENGINE::get_passive_collision_list();
