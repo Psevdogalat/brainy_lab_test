@@ -18,86 +18,28 @@ using namespace GAME_ENGINE;
 
 void camera_movement();
 void object_movement();
-void ray_cast(const VECTOR2D&, const VECTOR2D&, const VECTOR2D*, const UINT, VECTOR2D*&, UINT&);
-VECTOR_SHAPE extract_pure_shape(GAME_OBJECT* );
-VECTOR_COMPOSITE operation_composite( VECTOR_SHAPE& , VECTOR_SHAPE&, void(*)(VECTOR2D*, UINT, VECTOR2D*, UINT, VECTOR2D*&, UINT&));
-
-typedef struct{
-	const GAME_OBJECT* 	object;
-	VECTOR2D			normal;
-	double 				distance;		
-}RAYCAST_INFO;
-
-typedef std::list<RAYCAST_INFO> RAYCAST_INFO_LIST;
-
-class GAME_OBJECT_FILTER{
-	protected:
-		static bool default_filt(const std::list<GAME_OBJECT*>& , const GAME_OBJECT* );
-	public:
-		std::list<GAME_OBJECT*> pointers;
-		bool(* filter_func)(const std::list<GAME_OBJECT*>& , const GAME_OBJECT* );
-		bool inverse;
-		bool filt(const GAME_OBJECT* ) const;
-		GAME_OBJECT_FILTER();
-		~GAME_OBJECT_FILTER();
-};
-
-GAME_OBJECT_FILTER::GAME_OBJECT_FILTER(){
-		filter_func = default_filt;
-		inverse 	= false;
-}
-
-GAME_OBJECT_FILTER::~GAME_OBJECT_FILTER(){
-	
-}
-
-bool GAME_OBJECT_FILTER::filt(const GAME_OBJECT* Object) const{
-	if(!filter_func)
-		return true;
-	
-	return filter_func(pointers, Object) != inverse;
-}
-
-bool GAME_OBJECT_FILTER::default_filt(const std::list<GAME_OBJECT*>& Pointers, const GAME_OBJECT* Object){
-	
-	for(GAME_OBJECT* target: Pointers){
-		if(Object == target)
-			return true;
-	}
-		
-	return false;
-}
-
-
-
-bool raycast(const VECTOR2D&, const VECTOR2D&, const GAME_OBJECT_FILTER*, RAYCAST_INFO& );
-bool raycast(const VECTOR2D&, const VECTOR2D*, const UINT, double&, VECTOR2D&);
-bool bouncing_raycast(
-	const VECTOR2D&, const VECTOR2D&, 
-	const GAME_OBJECT_FILTER*, const GAME_OBJECT_FILTER*, 
-	UINT, RAYCAST_INFO_LIST& 
-);
-
-static bool draw_collisions = false;
 
 static CAMERA* 	 				camera;
+static SCENE*					game_scene;
 static GAME_OBJECT* 			grid;
 static GAME_OBJECT* 			mov_object;
 static std::list<GAME_OBJECT*> 	mov_list;
 
-static GAME_OBJECT*	unit;
-static GAME_OBJECT* ray_caster;
-static GAME_OBJECT* ray;
-static GAME_OBJECT* cursor;
-static GAME_OBJECT* colliding_point;
+static GAME_OBJECT*				unit;
+static GAME_OBJECT* 			ray_caster;
+static GAME_OBJECT* 			ray;
+static GAME_OBJECT* 			cursor;
+static GAME_OBJECT* 			colliding_point;
 
-static GAME_OBJECT_FILTER filter;
-static GAME_OBJECT_FILTER stop_filter;
+static GAME_OBJECT_FILTER 		filter;
+static GAME_OBJECT_FILTER 		stop_filter;
 
 static GRAPHIC_MODEL_VECTOR*	ray_caster_model;
 static GRAPHIC_MODEL_VECTOR*	ray_model;
 static GRAPHIC_MODEL_VECTOR*	cursor_model;
 static GRAPHIC_MODEL_VECTOR*	colliding_point_model;
+
+static bool 		draw_collisions 	= false;
 
 static double		camera_scale_max	= 1.0;
 static double		camera_scale_min	= 0.05;
@@ -149,10 +91,12 @@ void ENGINE::init_scene(){
 	set_draw_graphic_models		(true	);
 	set_draw_collision_models	(true	);
 	
+	
 	scene.camera.set_area(VECTOR_RECTANGLE(vector2d(0,0), create_normal(), 1.5, 1.0));
 	scene.camera.set_scale(camera_scale);
 	camera_proportion = vector2d(1.5 , 1.0);
-	camera = &scene.camera;
+	camera 		= &scene.camera;
+	game_scene  = &scene;
 	
 	grid = spawn(new METRIC_GRID(40.0, 20.0), vector2d(0,0), create_normal());
 	grid->set_visible(true);
@@ -251,7 +195,7 @@ void ENGINE::compute(double Frame_time){
 	ray_origin		= ray_caster->get_position();
 	ray_direction	= ray_caster->get_normal();
 	
-	if(bouncing_raycast(ray_origin, ray_direction, nullptr, &stop_filter, polyline->get_vertices_quantity()-2 ,info_list)){
+	if(game_scene->bouncing_raycast(ray_origin, ray_direction, nullptr, &stop_filter, polyline->get_vertices_quantity()-2 ,info_list)){
 		
 		UINT i = 0;
 		point = ray_origin;
@@ -425,315 +369,4 @@ void object_movement(){
 		);
 		
 	cursor->set_position(mov_object->get_position());
-}
-
-
- 
-VECTOR_SHAPE extract_pure_shape(GAME_OBJECT* Object){
-	GRAPHIC_MODEL_VECTOR* 	model;
-	VECTOR_SHAPE 			shape;
-	VECTOR2D 	shape_position;
-	VECTOR2D	shape_normal;
-	VECTOR2D	object_position;
-	VECTOR2D	object_normal;
-	double 	shape_scale;
-	double 	object_scale;
-	VECTOR2D vertex;
-
-	model = (GRAPHIC_MODEL_VECTOR*) Object->get_graphic_model();
-	shape = *(VECTOR_SHAPE*) model->get_vector_object();
-
-	object_normal		= Object->get_normal();
-	object_position		= Object->get_position();
-	shape_scale			= shape.get_scale();
-	shape_position 		= shape.get_position();
-	shape_normal		= shape.get_normal();
-
-	for(UINT ivertex = 0; ivertex < shape.get_vertices_quantity(); ivertex++){
-		 shape.get_vertex(ivertex, vertex);
-		 vertex = transform_vertex(vertex, shape_position,  shape_normal,  shape_scale);
-		 vertex = transform_vertex(vertex, object_position, object_normal, 1.0);
-		 shape.set_vertex(ivertex, vertex);
-	}
-	shape.set_position(vector2d(0.0, 0.0));
-	shape.set_normal(create_normal());
-	shape.set_scale(1.0);
-
-	 return shape;
-}
- 
-
- 
-VECTOR_COMPOSITE operation_composite(
-	VECTOR_SHAPE& Shape1, VECTOR_SHAPE& Shape2,
-	void(* Operation)(VECTOR2D*, UINT, VECTOR2D*, UINT, VECTOR2D*&, UINT&)
-){
-	VECTOR_COMPOSITE composite;
-	VECTOR_OBJECT*	 vobject	= nullptr;
-	VECTOR_POINT	 point;
-	
-	UINT 		vertices1_quantity;
-	VECTOR2D*	vertices1;
-	
-	UINT 		vertices2_quantity;
-	VECTOR2D*	vertices2;
-	
-	UINT 		result_vertices_quantity;
-	VECTOR2D*	result_vertices;
-	
-	UINT 		hull_vertices_quantity;
-	VECTOR2D*	hull_vertices;
-	
-	VECTOR2D 	average_vertex;
-	
-	if(Operation == nullptr)
-		return composite;
-	
-	vertices1_quantity = Shape1.get_vertices_quantity();
-	vertices2_quantity = Shape2.get_vertices_quantity();
-	
-	vertices1 = new VECTOR2D[vertices1_quantity];
-	for(UINT i = 0; i < vertices1_quantity; i++)
-		Shape1.get_vertex(i,vertices1[i]);
-	
-	vertices2 = new VECTOR2D[vertices2_quantity];
-	for(UINT i = 0; i < vertices2_quantity; i++)
-		Shape2.get_vertex(i,vertices2[i]);
-	
-	Operation(
-		vertices1		, vertices1_quantity, 
-		vertices2		, vertices2_quantity, 
-		result_vertices	, result_vertices_quantity);
-	
-	delete [] vertices1;
-	delete [] vertices2;
-	
-	
-	if(result_vertices_quantity > 0 ){
-		
-		average_vertex 	= vector2d(0.0, 0.0);
-		for(UINT i = 0; i < result_vertices_quantity; i++)
-			average_vertex += result_vertices[i];
-		
-		average_vertex /= result_vertices_quantity;
-		point.set_position(average_vertex);
-		composite.push_component(&point);
-	
-		get_mch_jarvis(result_vertices, result_vertices_quantity, hull_vertices, hull_vertices_quantity); 
-		if(hull_vertices_quantity > 0){
-			
-		
-			if(hull_vertices_quantity == 2){
-				vobject = new VECTOR_POLYLINE();
-				for(UINT i = 0; i < hull_vertices_quantity; i++)
-					((VECTOR_POLYLINE*)vobject)->set_vertex(i, hull_vertices[i]);
-		
-			}else if(hull_vertices_quantity > 2){
-				vobject = new VECTOR_SHAPE(vector2d(0.0, 0.0), create_normal(), hull_vertices_quantity);
-				for(UINT i = 0; i < hull_vertices_quantity; i++)
-					((VECTOR_POLYLINE*)vobject)->set_vertex(i, hull_vertices[i]);
-		
-			}
-			
-			composite.push_component(vobject);			
-			
-			delete vobject;
-			delete [] hull_vertices;
-		}
-		
-		for(UINT i = 0; i < result_vertices_quantity; i++){
-			point.set_position(result_vertices[i]);
-			composite.push_component(&point);
-		}
-		
-		delete [] result_vertices;
-	}
-	
-	return composite;
-} 
-
-bool bouncing_raycast(
-	const VECTOR2D& Origin, const VECTOR2D& Direction, 
-	const GAME_OBJECT_FILTER* Filter, const GAME_OBJECT_FILTER* Stop_filter, 
-	UINT Bounce_limit, RAYCAST_INFO_LIST& Info_list 
-){
-	UINT		 intersections;
-	RAYCAST_INFO info;
-	VECTOR2D	 origin;
-	VECTOR2D	 direction;
-	
-	intersections	= 0;	
-	origin 			= Origin;
-	direction		= Direction;
-	
-	while(raycast(origin, direction, Filter, info)){
-		intersections++;
-		Info_list.push_back(info);
-		
-		if(Stop_filter && Stop_filter->filt(info.object))
-			break;
-		
-		if(Bounce_limit == intersections - 1)
-			break;
-		
-		origin 		+= direction * info.distance;
-		direction	= mirror_vector(direction, info.normal);
-	}
-	
-	if(intersections)
-		return true;
-	
-	return false;
-}
-
-bool raycast(const VECTOR2D& Origin, const VECTOR2D& Direction,const GAME_OBJECT_FILTER* Filter, RAYCAST_INFO& Info){
-	
-	const GAME_OBJECT*			object;
-	const COLLISION_NODE_LIST*	collisions_list;
-	const COLLISION_MODEL*		collision_model;
-	const VECTOR2D*				model_vertices;
-	VECTOR2D*					vertices;
-	UINT						vertices_quantity;
-	double 						distance;
-	VECTOR2D					normal;
-	RAYCAST_INFO				info;
-	
-	info.object 	= nullptr;
-	collisions_list	= GAME_ENGINE::get_passive_collision_list();
-	
-	for(COLLISION_NODE* node: *collisions_list){
-		object = node->get_game_object();
-		
-		if(Filter && !Filter->filt(object))
-			continue;
-		
-		collision_model 	= node->get_collision_model();
-		vertices_quantity 	= collision_model->get_vertices_quantity();
-		model_vertices		= collision_model->get_vertices();
-		
-		vertices = new VECTOR2D[vertices_quantity];
-		for(UINT i = 0; i < vertices_quantity; i++)
-			vertices[i] = transform_vertex(
-				model_vertices[i], 
-				object->get_position() - Origin, 
-				object->get_normal(), 1.0
-			);
-		
-		if(raycast(Direction, vertices, vertices_quantity, distance, normal) && distance >= 0.0)
-			if(info.object == nullptr || info.distance > distance){
-				info.object 	= object;
-				info.distance	= distance;
-				info.normal		= normal;
-			}
-			
-		delete [] vertices;
-			
-	}
-
-	if(info.object){
-		Info = info;
-		return true;
-	}
-	
-	return false;
-}	
-
-bool raycast(
-	const VECTOR2D& Direction, 
-	const VECTOR2D* Vertices, const UINT Vertices_quantity, 
-	double& Distance, VECTOR2D& Normal
-){
-	
-	VECTOR2D 	vertex_a;
-	VECTOR2D 	vertex_b;
-	double 		vec_a;
-	double 		vec_b;
-	double 		distance;
-	UINT		intersections;
-	
-	intersections 	= 0;
-	vertex_a 		= Vertices[Vertices_quantity-1];
-	
-	for(UINT i = 0; i < Vertices_quantity; i++){
-		vertex_b = Vertices[i];
-		
-		vec_a = vector_product2d(Direction, vertex_a);
-		vec_b = vector_product2d(Direction, vertex_b);
-		
-		if(vec_a * vec_b < 0){
-			distance 		= vector_product2d(vertex_a, vertex_b)/ (vec_b - vec_a);
-			
-			if(!intersections || Distance > distance){
-				Distance 	= distance;
-				Normal 		= left_orto_normal(vertex_b - vertex_a);
-				intersections++;
-			}
-		}
-		
-		vertex_a = vertex_b;
-	}
-	
-	if(intersections)
-		return true;
-	
-	return false;
-}
-
-void ray_cast(
-	const VECTOR2D& Origin,				const VECTOR2D& Direction , 
-	const VECTOR2D* Shape_vertices, 	const UINT Shape_vertices_quantity, 
-	VECTOR2D*&		Collision_points, 	UINT& Collision_points_quantity
-){
-	VECTOR2D* Vertices = new VECTOR2D[Shape_vertices_quantity];
-	for(UINT i=0; i< Shape_vertices_quantity; i++)
-		Vertices[i] = Shape_vertices[i] - Origin;
-	
-	Collision_points 			= nullptr;
-	Collision_points_quantity 	= 0;
-	
-	VECTOR2D vertex_a;
-	VECTOR2D vertex_b;
-	VECTOR2D collision_point;
-	double vec_a;
-	double vec_b;
-	double distance;
-	
-	vertex_a = Vertices[Shape_vertices_quantity-1];
-	
-	for(UINT i = 0; i < Shape_vertices_quantity; i++){
-		vertex_b = Vertices[i];
-		
-		vec_a = vector_product2d(Direction, vertex_a);
-		vec_b = vector_product2d(Direction, vertex_b);
-		
-		if(vec_a * vec_b < 0){
-			distance 		= vector_product2d(vertex_a, vertex_b)/ (vec_b - vec_a);
-			
-			if(distance >= 0.0){			
-				collision_point = Direction * distance;
-			
-				if(!Collision_points_quantity){
-					Collision_points_quantity = 2;
-					Collision_points = new VECTOR2D[Collision_points_quantity];
-					Collision_points[0] = collision_point;
-					Collision_points[1] = collision_point;
-					
-				}else{
-					if(distance < scalar_product2d(Direction, Collision_points[0]))
-						Collision_points[0] = collision_point;
-					
-					if(distance > scalar_product2d(Direction, Collision_points[1]))
-						Collision_points[1] = collision_point;
-				}
-			}
-		}
-		
-		vertex_a = vertex_b;
-	}
-	
-	if(Collision_points_quantity)
-		for(UINT i = 0; i < Collision_points_quantity; i++)
-			Collision_points[i] += Origin;
-	
-	delete [] Vertices;
 }
