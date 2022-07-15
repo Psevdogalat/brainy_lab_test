@@ -30,6 +30,10 @@ $(OBJ)/test_module.o: test_module.cpp
 $(OBJ)/gjk_test.o: gjk_test.cpp
 	mkdir -p $(OBJ)
 	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@
+	
+$(OBJ)/raycast_test.o: raycast_test.cpp
+	mkdir -p $(OBJ)
+	gcc -x c++ $(DBGFLG) $(OPTKEYS) $< $(INCLUDE_FLAGS) -c -o $@
 
 $(OBJ)/objects.o: objects.cpp  $(INCLUDE)/objects.h
 	mkdir -p $(OBJ)
@@ -64,6 +68,8 @@ game.exe:  $(OBJ)/objects.o $(OBJ)/game_module.o $(OBJ)/vector_utilits.o $(OBJ)/
 test.exe: $(OBJ)/objects.o $(OBJ)/test_module.o $(OBJ)/vector_utilits.o $(OBJ)/utilits.o $(OBJ)/keys.o $(OBJ)/controllers.o $(OBJ)/collisions2.o $(ENGINE_OBJ) 
 	gcc $(DBGFLG) $^ $(LIBS_FLAGS) -o $@
 
-
 gjk_test.exe: $(OBJ)/objects.o $(OBJ)/gjk_test.o $(OBJ)/vector_utilits.o $(OBJ)/utilits.o $(OBJ)/keys.o $(OBJ)/controllers.o $(OBJ)/collisions2.o $(ENGINE_OBJ) 
+	gcc $(DBGFLG) $^ $(LIBS_FLAGS) -o $@
+	
+raycast_test.exe: $(OBJ)/objects.o $(OBJ)/raycast_test.o $(OBJ)/vector_utilits.o $(OBJ)/utilits.o $(OBJ)/keys.o $(OBJ)/controllers.o $(OBJ)/collisions2.o $(ENGINE_OBJ) 
 	gcc $(DBGFLG) $^ $(LIBS_FLAGS) -o $@
